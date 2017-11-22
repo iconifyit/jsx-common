@@ -64,19 +64,36 @@ Utils.chooseFile = function(oFile, title, file_filter) {
  * ,,-605,263,1893,-1048
  */
 Utils.getScreenSize = function() {
+    var screen;
 
-    if (view = app.activeDocument.views[0] ) {
-        view.zoom = 1;
-        return {
-            left   : parseInt(view.bounds[0]),
-            top    : parseInt(view.bounds[1]),
-            right  : parseInt(view.bounds[2]),
-            bottom : parseInt(view.bounds[3]),
-            width  : parseInt(view.bounds[2]) - parseInt(view.bounds[0]),
-            height : parseInt(view.bounds[1]) - parseInt(view.bounds[3])
-        };
+    for (i=0; i<$.screens.length; i++) {
+        screen = $.screens[i];
+        if (screen.primary == true) {
+            screen.width = screen.right - screen.left;
+            screen.height = screen.bottom - screen.top;
+        }
     }
-    return null;
+
+    return screen;
+};
+
+/**
+ * Get the screen resolution of the primary screen.
+ * @returns {{bottom: number, left: number, top: number, right: number, primary: boolean, width: number, height: number}}
+ */
+Utils.getScreenResolution = function() {
+
+    var screen;
+
+    for (i=0; i<$.screens.length; i++) {
+        screen = $.screens[i];
+        if (screen.primary == true) {
+            screen.width = screen.right - screen.left;
+            screen.height = screen.bottom - screen.top;
+        }
+    }
+
+    return screen;
 };
 
 /**
