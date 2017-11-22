@@ -208,7 +208,7 @@ Utils.read_file = function( filepath ) {
         catch(ex) {
 
             try { theFile.close(); }catch(ex){};
-            logger("read_file - " + ex);
+            Utils.logger("read_file - " + ex);
         }
     }
 
@@ -231,7 +231,7 @@ Utils.read_json_file = function(filepath) {
         }
     }
     catch(ex) {
-        logger('doUpdatePresets - ' + ex.message);
+        Utils.logger('doUpdatePresets - ' + ex.message);
     }
     return result;
 };
