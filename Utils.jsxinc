@@ -23,19 +23,17 @@
  *
  */
 
-#include "JSON.jsxinc";
-
 var Utils = {};
 
 /**
  * Get a value from an object or array.
  * @param   {object|array}    subject
  * @param   {string}          key
- * @param   {*}               dfault
+ * @param   {*}               _default
  * @returns {*}
  */
-Utils.get = function( subject, key, dfault ) {
-    var value = dfault;
+Utils.get = function( subject, key, _default ) {
+    var value = _default;
     if (typeof(subject[key]) != 'undefined') {
         value = subject[key];
     }
@@ -63,35 +61,22 @@ Utils.chooseFile = function(oFile, title, file_filter) {
 /**
  * Gets the screen dimensions and bounds.
  * @returns {{left: *, top: *, right: *, bottom: *}}
+ * ,,-605,263,1893,-1048
  */
 Utils.getScreenSize = function() {
-    var screen;
 
-    for (i=0; i<$.screens.length; i++) {
-        if ($.screens[i].primary == true) {
-            screen = $.screens[i];
-            screen.width = screen.right - screen.left;
-            screen.height = screen.bottom - screen.top;
-        }
+    if (view = app.activeDocument.views[0] ) {
+        view.zoom = 1;
+        return {
+            left   : parseInt(view.bounds[0]),
+            top    : parseInt(view.bounds[1]),
+            right  : parseInt(view.bounds[2]),
+            bottom : parseInt(view.bounds[3]),
+            width  : parseInt(view.bounds[2]) - parseInt(view.bounds[0]),
+            height : parseInt(view.bounds[1]) - parseInt(view.bounds[3])
+        };
     }
-    return screen;
-};
-
-/**
- * Create a new dialog, centered on screen.
- * @param type
- * @param width
- * @param height
- * @param title
- * @returns {window}
- */
-Utils.window = function(type, title, width, height) {
-    var dialog = new Window(
-        type, title,
-        [0, 0, width, height]
-    );
-    dialog.center();
-    return dialog;
+    return null;
 };
 
 /**
@@ -128,37 +113,11 @@ Utils.trim = function(str) {
  * Logging for this script.
  * @param {string} message      The logging text
  * @return void
- * @deprecated
  */
-Utils.logger = function(message, line, filename) {
+Utils.logger = function(message) {
 
-    if (! CONFIG) {
-        CONFIG = {
-            LOG_FOLDER    : "/var/log/",
-            LOG_FILE_PATH : "/var/log/extendscript-utils-" + Utils.dateFormate(new Date().getTime()) + ".log"
-        }
-    }
-
-    message = message + "\n" + $.error + "\n\nSTACK TRACE: \n\n" + $.stack;
-
-    try {
-        Utils.folder( CONFIG.LOG_FOLDER );
-        Utils.write_file(CONFIG.LOG_FILE_PATH, "[" + new Date().toUTCString() + "] " + message);
-    }
-    catch(ex) {
-        alert([line, filename, message].join(' - '));
-    }
-};
-
-/**
- * Logging for this script.
- * @param {string} message      The logging text
- * @return void
- */
-Utils.log = function(folder_path, file_path, message) {
-
-    Utils.folder(folder_path);
-    Utils.write_file(file_path, "[" + new Date().toUTCString() + "] " + message);
+    Utils.folder( CONFIG.LOG_FOLDER );
+    Utils.write_file(CONFIG.LOG_FILE_PATH, "[" + new Date().toUTCString() + "] " + message);
 };
 
 /**
@@ -228,7 +187,7 @@ Utils.write_json_file = function( path, json, replace ) {
         Utils.write_file(path, Utils.objectToString(json), replace);
     }
     catch(ex) {
-        Utils.logger(ex, $.line, $.fileName);
+        Utils.logger('savePresetsFile - ' + ex);
     }
 };
 
@@ -270,7 +229,7 @@ Utils.read_file = function( filepath ) {
         catch(ex) {
 
             try { theFile.close(); }catch(ex){};
-            Utils.logger(ex, $.line, $.fileName);
+            logger("read_file - " + ex);
         }
     }
 
@@ -286,14 +245,14 @@ Utils.read_json_file = function(filepath) {
     var contents, result;
     try {
         if ( contents = Utils.read_file( filepath ) ) {
-            result = JSON.parse(contents);
+            result = eval("(" + contents + ")" );
             if ( typeof(result) != 'object') {
                 result = null;
             }
         }
     }
     catch(ex) {
-        Utils.logger(ex, $.line, $.fileName);
+        logger('doUpdatePresets - ' + ex.message);
     }
     return result;
 };
@@ -333,7 +292,7 @@ Utils.deleteFile = function( filepath, mustconfirm ) {
         new File(filepath).remove();
     }
     catch(ex) {
-        Utils.logger($.line + ' - ' + $.fileName + ' - ' + $.error);
+        Utils.logger('Utils.deleteFile - ' + ex.message);
     }
 };
 
@@ -433,7 +392,7 @@ Utils.alignToNearestPixel = function(sel) {
 
     try {
         if (typeof sel != "object") {
-            Utils.logger($.line + ' - ' + $.fileName + ' - ' + LANG.NO_SELECTION);
+            Utils.logger(LANG.NO_SELECTION);
         }
         else {
             for (i = 0 ; i < sel.length; i++) {
@@ -444,7 +403,7 @@ Utils.alignToNearestPixel = function(sel) {
         }
     }
     catch(ex) {
-        Utils.logger($.line + ' - ' + $.fileName + ' - ' + $.error);
+        Utils.logger(ex);
     }
 };
 
@@ -570,106 +529,4 @@ Utils.updateProgressMessage = function(message) {
     Utils.progress.pnl.progBarLabel.text = val + ' of ' + max + ' - ' + message;
     $.sleep(10);
     Utils.progress.update();
-};
-
-/**
- * Format the date in YYYY-MM-DD format
- * @param string date  The date in timestring format
- * @return date string in YYYY-MM-DD format (2015-10-06)
- */
-Utils.dateFormat = function(date) {
-    var d = new Date(date),
-        month = '' + (d.getMonth() + 1),
-        day = '' + d.getDate(),
-        year = d.getFullYear();
-
-    if (month.length < 2) month = '0' + month;
-    if (day.length < 2) day = '0' + day;
-
-    return [year, month, day].join('-');
-}
-
-/**
- * Logger message types.
- * @type {{ERROR: string, INFO: string, WARN: string}}
- */
-var LogTypes = {
-    ERROR : "ERROR: ",
-    INFO  : "INFO: ",
-    WARN  : "WARN: "
-};
-
-/**
- * Create a new logger instance.
- * @param name
- * @param folder
- * @constructor
- */
-function Logger(name, folder) {
-
-    this.folder = new Folder(folder);
-
-    this.file   = null;
-
-    if (! this.folder.exists) {
-        this.folder.create();
-    }
-
-    this.file = new File(
-        this.folder.absoluteURI + "/" + name + "-" + Utils.dateFormat(new Date().getTime())+ ".log"
-    );
-
-};
-
-/**
- * Logger prototype.
- * @type {{
- *     types: {
- *         INFO: string,
- *         WARN: string,
- *         ERROR: string
- *     },
- *     info: Logger.info,
- *     warn: Logger.warn,
- *     error: Logger.error,
- *     log: Logger.log,
- *     remove: Logger.remove,
- *     create: Logger.create
- * }}
- */
-Logger.prototype = {
-
-    types:{
-        INFO  : "INFO",
-        WARN  : "WARN",
-        ERROR : "ERROR"
-    },
-
-    info : function(message) {
-        this.log(message, this.types.INFO);
-    },
-
-    warn : function(message) {
-        this.log(message, this.types.WARN);
-    },
-
-    error : function(message) {
-        this.log(message, this.types.ERROR);
-    },
-
-    log : function(message, type) {
-        Utils.write_file(this.file.absoluteURI, "[" + this.types[type] + "][" + new Date().toUTCString() + "] " + message);
-    },
-
-    remove : function() {
-        if (this.file.exists) {
-            return this.file.remove();
-        }
-    },
-
-    create : function() {
-        if (! this.file.exists) {
-            return this.file.create();
-        }
-    }
 };

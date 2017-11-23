@@ -1,7 +1,7 @@
 /**
  * Add Array.indexOf support if not supported natively.
  */
-if (! Array.prototype.indexOf) {
+if(!Array.prototype.indexOf) {
     /**
      * Gets the index of an element in an array.
      * @param what
