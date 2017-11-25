@@ -1,7 +1,7 @@
 /**
- * The MIT License (MIT)
- *
- * Copyright (c) 2017 Scott Lewis
+ * @author Scott Lewis <scott@vectoricons.net>
+ * @license The MIT License (MIT)
+ * @copyright 2017 Scott Lewis
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,13 +20,12 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
- *
  */
 
 /**
  * Set the base include path.
  */
-#includepath "/Users/scott/github/iconify/jsx-common/";
+#includepath "inc/";
 
 /**
  * Include dependencies.
@@ -189,17 +188,6 @@ Utils.logger = function(message, line, filename) {
     catch(ex) {
         alert([line, filename, message].join(' - '));
     }
-};
-
-/**
- * Logging for this script.
- * @param {string} message      The logging text
- * @return void
- */
-Utils.log = function(folder_path, file_path, message) {
-
-    Utils.folder(folder_path);
-    Utils.write_file(file_path, "[" + new Date().toUTCString() + "] " + message);
 };
 
 /**
@@ -488,36 +476,6 @@ Utils.alignToNearestPixel = function(sel) {
 };
 
 /**
- * Callback for sorting the SVG filelist.
- * @param a
- * @param b
- * @returns {number}
- */
-Utils.comparator = function(a, b) {
-    var nameA = Utils.tagsToNameSlug(a.tags);
-    var nameB = Utils.tagsToNameSlug(b.tags);
-    if (nameA < nameB) {
-        return -1;
-    }
-    if (nameA > nameB) {
-        return 1;
-    }
-    // names must be equal
-    return 0;
-};
-
-/**
- * Convert IconJar tags to filename
- * @param {string}      tags  Comma-separated list of tags.
- * @returns {string}
- */
-Utils.tagsToNameSlug = function(tags) {
-    if (typeof(tags) != "string") return tags;
-    var tags = tags.toLowerCase();
-    return tags.split(',').join('-').replace(' ','-');
-};
-
-/**
  * Cleans up the filename/artboardname.
  * @param   {String}    name    The name to filter and reformat.
  * @returns  {String}            The cleaned up name.
@@ -567,15 +525,14 @@ Utils.anyParentHidden = function(item) {
 
 /**
  * Groups selected items.
- * @param {Object} selection
  * @returns void
  */
-//TODO: Does not currently work.
-Utils.groupSelection = function(selection){
-    if (selection.length > 0) {
-        for (i = 0; i < selection.length; i++) {
-            selection[i].moveToEnd(newGroup);
-        }
+Utils.groupSelection = function() {
+    try {
+        app.executeMenuCommand('group');
+    }
+    catch(e) {
+        alert(localize({en_US: "Items could not be grouped (line: %1, file: %2)"}, $.line, $.fileName));
     }
 };
 
