@@ -23,17 +23,38 @@
  *
  */
 
+#include "/Users/scott/github/iconify/jsx-common/JSON.jsxinc";
+
+$.localize = true;
+
 var Utils = {};
+
+/**
+ * Turn off displaying alerts.
+ */
+Utils.displayAlertsOff = function() {
+    userInteractionLevel = UserInteractionLevel.DONTDISPLAYALERTS;
+};
+
+/**
+ * Turn on displaying alerts.
+ */
+Utils.displayAlertsOn = function() {
+    try {
+        userInteractionLevel = UserInteractionLevel.DISPLAYALERTS;
+    }
+    catch(e) {/* Exit Gracefully */}
+}
 
 /**
  * Get a value from an object or array.
  * @param   {object|array}    subject
  * @param   {string}          key
- * @param   {*}               _default
+ * @param   {*}               dfault
  * @returns {*}
  */
-Utils.get = function( subject, key, _default ) {
-    var value = _default;
+Utils.get = function( subject, key, dfault ) {
+    var value = dfault;
     if (typeof(subject[key]) != 'undefined') {
         value = subject[key];
     }
@@ -61,22 +82,35 @@ Utils.chooseFile = function(oFile, title, file_filter) {
 /**
  * Gets the screen dimensions and bounds.
  * @returns {{left: *, top: *, right: *, bottom: *}}
- * ,,-605,263,1893,-1048
  */
 Utils.getScreenSize = function() {
+    var screen;
 
-    if (view = app.activeDocument.views[0] ) {
-        view.zoom = 1;
-        return {
-            left   : parseInt(view.bounds[0]),
-            top    : parseInt(view.bounds[1]),
-            right  : parseInt(view.bounds[2]),
-            bottom : parseInt(view.bounds[3]),
-            width  : parseInt(view.bounds[2]) - parseInt(view.bounds[0]),
-            height : parseInt(view.bounds[1]) - parseInt(view.bounds[3])
-        };
+    for (i=0; i<$.screens.length; i++) {
+        if ($.screens[i].primary == true) {
+            screen = $.screens[i];
+            screen.width = screen.right - screen.left;
+            screen.height = screen.bottom - screen.top;
+        }
     }
-    return null;
+    return screen;
+};
+
+/**
+ * Create a new dialog, centered on screen.
+ * @param type
+ * @param width
+ * @param height
+ * @param title
+ * @returns {window}
+ */
+Utils.window = function(type, title, width, height) {
+    var dialog = new Window(
+        type, title,
+        [0, 0, width, height]
+    );
+    dialog.center();
+    return dialog;
 };
 
 /**
@@ -113,11 +147,37 @@ Utils.trim = function(str) {
  * Logging for this script.
  * @param {string} message      The logging text
  * @return void
+ * @deprecated
  */
-Utils.logger = function(message) {
+Utils.logger = function(message, line, filename) {
 
-    Utils.folder( CONFIG.LOG_FOLDER );
-    Utils.write_file(CONFIG.LOG_FILE_PATH, "[" + new Date().toUTCString() + "] " + message);
+    if (! CONFIG) {
+        CONFIG = {
+            LOG_FOLDER    : "/var/log/",
+            LOG_FILE_PATH : "/var/log/extendscript-utils-" + Utils.dateFormate(new Date().getTime()) + ".log"
+        }
+    }
+
+    message = message + "\n" + $.error + "\n\nSTACK TRACE: \n\n" + $.stack;
+
+    try {
+        Utils.folder( CONFIG.LOG_FOLDER );
+        Utils.write_file(CONFIG.LOG_FILE_PATH, "[" + new Date().toUTCString() + "] " + message);
+    }
+    catch(ex) {
+        alert([line, filename, message].join(' - '));
+    }
+};
+
+/**
+ * Logging for this script.
+ * @param {string} message      The logging text
+ * @return void
+ */
+Utils.log = function(folder_path, file_path, message) {
+
+    Utils.folder(folder_path);
+    Utils.write_file(file_path, "[" + new Date().toUTCString() + "] " + message);
 };
 
 /**
@@ -187,7 +247,7 @@ Utils.write_json_file = function( path, json, replace ) {
         Utils.write_file(path, Utils.objectToString(json), replace);
     }
     catch(ex) {
-        Utils.logger('savePresetsFile - ' + ex);
+        Utils.logger(ex, $.line, $.fileName);
     }
 };
 
@@ -229,10 +289,9 @@ Utils.read_file = function( filepath ) {
         catch(ex) {
 
             try { theFile.close(); }catch(ex){};
-            logger("read_file - " + ex);
+            Utils.logger(ex, $.line, $.fileName);
         }
     }
-
     return content;
 };
 
@@ -245,14 +304,14 @@ Utils.read_json_file = function(filepath) {
     var contents, result;
     try {
         if ( contents = Utils.read_file( filepath ) ) {
-            result = eval("(" + contents + ")" );
+            result = JSON.parse(contents);
             if ( typeof(result) != 'object') {
                 result = null;
             }
         }
     }
     catch(ex) {
-        logger('doUpdatePresets - ' + ex.message);
+        Utils.logger(ex, $.line, $.fileName);
     }
     return result;
 };
@@ -292,7 +351,7 @@ Utils.deleteFile = function( filepath, mustconfirm ) {
         new File(filepath).remove();
     }
     catch(ex) {
-        Utils.logger('Utils.deleteFile - ' + ex.message);
+        Utils.logger($.line + ' - ' + $.fileName + ' - ' + $.error);
     }
 };
 
@@ -340,7 +399,6 @@ Utils.getFilesInSubfolders = function( srcFolder ) {
             }
         }
     }
-
     return svgFileList;
 };
 
@@ -392,7 +450,7 @@ Utils.alignToNearestPixel = function(sel) {
 
     try {
         if (typeof sel != "object") {
-            Utils.logger(LANG.NO_SELECTION);
+            Utils.logger($.line + ' - ' + $.fileName + ' - ' + LANG.NO_SELECTION);
         }
         else {
             for (i = 0 ; i < sel.length; i++) {
@@ -403,7 +461,7 @@ Utils.alignToNearestPixel = function(sel) {
         }
     }
     catch(ex) {
-        Utils.logger(ex);
+        Utils.logger($.line + ' - ' + $.fileName + ' - ' + $.error);
     }
 };
 
@@ -425,7 +483,6 @@ Utils.comparator = function(a, b) {
     // names must be equal
     return 0;
 };
-
 
 /**
  * Test if all parents are visible & unlocked.
@@ -449,7 +506,7 @@ Utils.anyParentLocked = function(item) {
         item = item.parent;
     }
     return false;
-}
+};
 
 /**
  * Derived from P. J. Onori's Iconic SVG Exporter.jsx
@@ -529,4 +586,142 @@ Utils.updateProgressMessage = function(message) {
     Utils.progress.pnl.progBarLabel.text = val + ' of ' + max + ' - ' + message;
     $.sleep(10);
     Utils.progress.update();
+};
+
+/**
+ * Alias for localize function.
+ * @param str
+ * @param vars
+ * @returns {*}
+ */
+Utils.i18n = function(str, vars) {
+    return localize({en_US: str}, vars);
+};
+
+/**
+ * Format the date in YYYY-MM-DD format
+ * @param string date  The date in timestring format
+ * @return date string in YYYY-MM-DD format (2015-10-06)
+ */
+Utils.dateFormat = function(date) {
+    var d = new Date(date),
+        month = '' + (d.getMonth() + 1),
+        day = '' + d.getDate(),
+        year = d.getFullYear();
+
+    if (month.length < 2) month = '0' + month;
+    if (day.length < 2) day = '0' + day;
+
+    return [year, month, day].join('-');
+};
+
+/**
+ * Create a new logger instance.
+ * @param name
+ * @param folder
+ * @constructor
+ */
+function Logger(name, folder) {
+
+    /**
+     * The log folder object.
+     * @type {Folder}
+     */
+    this.folder = new Folder(folder);
+
+    if (! this.folder.exists) {
+        this.folder.create();
+    }
+
+    /**
+     * The log file.
+     * @type {File}
+     */
+    this.file = new File(
+        this.folder.absoluteURI + "/" + name + "-" + Utils.dateFormat(new Date().getTime()) + ".log"
+    );
+
+};
+
+/**
+ * Logger prototype.
+ * @type {{
+ *     types: {
+ *         INFO: string,
+ *         WARN: string,
+ *         ERROR: string
+ *     },
+ *     info: Logger.info,
+ *     warn: Logger.warn,
+ *     error: Logger.error,
+ *     log: Logger.log,
+ *     remove: Logger.remove,
+ *     create: Logger.create
+ * }}
+ */
+Logger.prototype = {
+
+    /**
+     * Log message types.
+     */
+    types:{
+        INFO  : Utils.i18n("INFO"),
+        WARN  : Utils.i18n("WARN"),
+        ERROR : Utils.i18n("ERROR")
+    },
+
+    /**
+     * Add info message to log.
+     * @param message
+     */
+    info : function(message) {
+        this.log(message, this.types.INFO);
+    },
+
+    /**
+     * Add warning message to log.
+     * @param message
+     */
+    warn : function(message) {
+        this.log(message, this.types.WARN);
+    },
+
+    /**
+     * Add error message to log.
+     * @param message
+     */
+    error : function(message) {
+        this.log(message, this.types.ERROR);
+    },
+
+    /**
+     * Add message to log.
+     * @param message
+     */
+    log : function(message, type) {
+        Utils.write_file(
+            this.file.absoluteURI,
+            "[" + this.types[type] + "][" + new Date().toUTCString() + "] " + message
+        );
+    },
+
+    /**
+     * Delete log file.
+     * @returns {*|Array}
+     */
+    remove : function() {
+        if (this.file.exists) {
+            return this.file.remove();
+        }
+    },
+
+    /**
+     * Create the log file.
+     * @param message
+     */
+    create : function() {
+        if (! this.file.exists) {
+            return this.file.create();
+        }
+    }
 };
