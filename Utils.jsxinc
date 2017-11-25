@@ -23,10 +23,32 @@
  *
  */
 
-#include "/Users/scott/github/iconify/jsx-common/JSON.jsxinc";
+/**
+ * Set the base include path.
+ */
+#includepath "/Users/scott/github/iconify/jsx-common/";
 
+/**
+ * Include dependencies.
+ */
+#include "JSON.jsxinc";
+#include "Logger.jsx";
+
+/**
+ * Lets get started.
+ * @type {boolean}
+ */
 $.localize = true;
 
+/**
+ * @type {Logger}
+ */
+var logger = new Logger($.fileName, "/var/log/");
+
+/**
+ * Our base object.
+ * @type {{}}
+ */
 var Utils = {};
 
 /**
@@ -154,7 +176,7 @@ Utils.logger = function(message, line, filename) {
     if (! CONFIG) {
         CONFIG = {
             LOG_FOLDER    : "/var/log/",
-            LOG_FILE_PATH : "/var/log/extendscript-utils-" + Utils.dateFormate(new Date().getTime()) + ".log"
+            LOG_FILE_PATH : "/var/log/extendscript-utils-" + Utils.dateFormat(new Date().getTime()) + ".log"
         }
     }
 
@@ -407,7 +429,7 @@ Utils.getFilesInSubfolders = function( srcFolder ) {
  * @param {string}  date  The date in timestring format
  * @return {string} date string in YYYY-MM-DD format (2015-10-06)
  */
-Utils.doDateFormat = function(date) {
+Utils.dateFormat = function(date) {
     var d = new Date(date),
         month = '' + (d.getMonth() + 1),
         day = '' + d.getDate(),
@@ -472,8 +494,8 @@ Utils.alignToNearestPixel = function(sel) {
  * @returns {number}
  */
 Utils.comparator = function(a, b) {
-    var nameA = tagsToNameSlug(a.tags);
-    var nameB = tagsToNameSlug(b.tags);
+    var nameA = Utils.tagsToNameSlug(a.tags);
+    var nameB = Utils.tagsToNameSlug(b.tags);
     if (nameA < nameB) {
         return -1;
     }
@@ -483,6 +505,26 @@ Utils.comparator = function(a, b) {
     // names must be equal
     return 0;
 };
+
+/**
+ * Convert IconJar tags to filename
+ * @param {string}      tags  Comma-separated list of tags.
+ * @returns {string}
+ */
+Utils.tagsToNameSlug = function(tags) {
+    if (typeof(tags) != "string") return tags;
+    var tags = tags.toLowerCase();
+    return tags.split(',').join('-').replace(' ','-');
+};
+
+/**
+ * Cleans up the filename/artboardname.
+ * @param   {String}    name    The name to filter and reformat.
+ * @returns  {String}            The cleaned up name.
+ */
+Utils.filterName = function(name) {
+    return decodeURIComponent(name).replace(' ', '-');
+}
 
 /**
  * Test if all parents are visible & unlocked.
@@ -599,129 +641,24 @@ Utils.i18n = function(str, vars) {
 };
 
 /**
- * Format the date in YYYY-MM-DD format
- * @param string date  The date in timestring format
- * @return date string in YYYY-MM-DD format (2015-10-06)
+ * Converts a string, array, or object to dash-separated string.
+ * @param   {string|array|object}   subject    A string, array, or object to convert to a slug.
+ * @returns {string}                           The cleaned up name.
  */
-Utils.dateFormat = function(date) {
-    var d = new Date(date),
-        month = '' + (d.getMonth() + 1),
-        day = '' + d.getDate(),
-        year = d.getFullYear();
-
-    if (month.length < 2) month = '0' + month;
-    if (day.length < 2) day = '0' + day;
-
-    return [year, month, day].join('-');
-};
-
-/**
- * Create a new logger instance.
- * @param name
- * @param folder
- * @constructor
- */
-function Logger(name, folder) {
-
-    /**
-     * The log folder object.
-     * @type {Folder}
-     */
-    this.folder = new Folder(folder);
-
-    if (! this.folder.exists) {
-        this.folder.create();
+Utils.slugger = function(subject) {
+    if (typeof(subject) == "array") {
+        return subject.join('-');
     }
-
-    /**
-     * The log file.
-     * @type {File}
-     */
-    this.file = new File(
-        this.folder.absoluteURI + "/" + name + "-" + Utils.dateFormat(new Date().getTime()) + ".log"
-    );
-
-};
-
-/**
- * Logger prototype.
- * @type {{
- *     types: {
- *         INFO: string,
- *         WARN: string,
- *         ERROR: string
- *     },
- *     info: Logger.info,
- *     warn: Logger.warn,
- *     error: Logger.error,
- *     log: Logger.log,
- *     remove: Logger.remove,
- *     create: Logger.create
- * }}
- */
-Logger.prototype = {
-
-    /**
-     * Log message types.
-     */
-    types:{
-        INFO  : Utils.i18n("INFO"),
-        WARN  : Utils.i18n("WARN"),
-        ERROR : Utils.i18n("ERROR")
-    },
-
-    /**
-     * Add info message to log.
-     * @param message
-     */
-    info : function(message) {
-        this.log(message, this.types.INFO);
-    },
-
-    /**
-     * Add warning message to log.
-     * @param message
-     */
-    warn : function(message) {
-        this.log(message, this.types.WARN);
-    },
-
-    /**
-     * Add error message to log.
-     * @param message
-     */
-    error : function(message) {
-        this.log(message, this.types.ERROR);
-    },
-
-    /**
-     * Add message to log.
-     * @param message
-     */
-    log : function(message, type) {
-        Utils.write_file(
-            this.file.absoluteURI,
-            "[" + this.types[type] + "][" + new Date().toUTCString() + "] " + message
-        );
-    },
-
-    /**
-     * Delete log file.
-     * @returns {*|Array}
-     */
-    remove : function() {
-        if (this.file.exists) {
-            return this.file.remove();
+    else if (typeof(subject) == "object") {
+        var bits = [];
+        for (key in subject) {
+            if (typeof(subject[key]) != "string") continue;
+            bits.push(subject[key].toLowerCase());
         }
-    },
-
-    /**
-     * Create the log file.
-     * @param message
-     */
-    create : function() {
-        if (! this.file.exists) {
-            return this.file.create();
-        }
+        return bits.join('-');
     }
+    else if (typeof(subject) == "string") {
+        return decodeURIComponent(subject).replace(' ', '-');
+    }
+    return subject;
 };
