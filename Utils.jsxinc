@@ -193,17 +193,6 @@ Utils.logger = function(message, line, filename) {
 
 /**
  * Logging for this script.
- * @param {string} message      The logging text
- * @return void
- */
-Utils.log = function(folder_path, file_path, message) {
-
-    Utils.folder(folder_path);
-    Utils.write_file(file_path, "[" + new Date().toUTCString() + "] " + message);
-};
-
-/**
- * Logging for this script.
  * @param {string}  path        The file path
  * @param {string}  txt         The text to write
  * @param {bool}    replace     Replace the file
@@ -488,36 +477,6 @@ Utils.alignToNearestPixel = function(sel) {
 };
 
 /**
- * Callback for sorting the SVG filelist.
- * @param a
- * @param b
- * @returns {number}
- */
-Utils.comparator = function(a, b) {
-    var nameA = Utils.tagsToNameSlug(a.tags);
-    var nameB = Utils.tagsToNameSlug(b.tags);
-    if (nameA < nameB) {
-        return -1;
-    }
-    if (nameA > nameB) {
-        return 1;
-    }
-    // names must be equal
-    return 0;
-};
-
-/**
- * Convert IconJar tags to filename
- * @param {string}      tags  Comma-separated list of tags.
- * @returns {string}
- */
-Utils.tagsToNameSlug = function(tags) {
-    if (typeof(tags) != "string") return tags;
-    var tags = tags.toLowerCase();
-    return tags.split(',').join('-').replace(' ','-');
-};
-
-/**
  * Cleans up the filename/artboardname.
  * @param   {String}    name    The name to filter and reformat.
  * @returns  {String}            The cleaned up name.
@@ -567,15 +526,14 @@ Utils.anyParentHidden = function(item) {
 
 /**
  * Groups selected items.
- * @param {Object} selection
  * @returns void
  */
-//TODO: Does not currently work.
-Utils.groupSelection = function(selection){
-    if (selection.length > 0) {
-        for (i = 0; i < selection.length; i++) {
-            selection[i].moveToEnd(newGroup);
-        }
+Utils.groupSelection = function() {
+    try {
+        app.executeMenuCommand('group');
+    }
+    catch(e) {
+        alert(localize({en_US: "Items could not be grouped (line: %1, file: %2)"}, $.line, $.fileName));
     }
 };
 
