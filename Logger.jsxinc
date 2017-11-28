@@ -13,10 +13,18 @@
 function Logger(name, folder) {
 
     /**
+     * Default settings for the logger.
+     * @type {{folder: string}}
+     */
+    this.defaults = {
+        folder: "/var/log"
+    }
+
+    /**
      * The log folder object.
      * @type {Folder}
      */
-    this.folder = new Folder(folder);
+    this.folder = new Folder(folder || this.defaults.folder);
 
     // Create the log folder if not exists.
     if (! this.folder.exists) {
@@ -72,9 +80,10 @@ Logger.prototype = {
      * Log message types.
      */
     types: {
-        INFO  : localize({en_US: "INFO"}),
-        WARN  : localize({en_US: "WARN"}),
-        ERROR : localize({en_US: "ERROR"})
+        INFO    : localize({en_US: "INFO"}),
+        WARN    : localize({en_US: "WARN"}),
+        ERROR   : localize({en_US: "ERROR"}),
+        INSPECT : localize({en_US: "INSPECT"})
     },
 
     /**
@@ -129,6 +138,22 @@ Logger.prototype = {
     create : function() {
         if (! this.file.exists) {
             return this.file.create();
+        }
+    },
+
+    /**
+     * Prints an object to the log.
+     * @param obj
+     */
+    inspect: function(obj) {
+        for (key in obj) {
+            try {
+                this.log(key + ' : ' + obj[key], this.types.INSPECT);
+            }
+            catch(e) {
+                this.log(key + ' : [' + localize({en_US: 'Internal Error'}) + ']', this.types.INSPECT);
+            }
+
         }
     }
 };
