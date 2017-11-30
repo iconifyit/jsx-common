@@ -561,6 +561,14 @@ Utils.showProgressBar = function(maxvalue) {
 };
 
 /**
+ * Hides and destroys the progress bar.
+ */
+Utils.hideProgressBar = function() {
+    Utils.progress.hide();
+    Utils.progress = null;
+}
+
+/**
  * Updates the progress bar.
  * @param progress
  * @returns {*}
