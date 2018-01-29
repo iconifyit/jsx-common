@@ -8,7 +8,7 @@ You will notice that the file extension for these scripts is JSXINC. This is bec
 
 To use any of these scripts, simply include the following in your script:
 
-```typescript jsx
+```jsx
 #include "/path/to/jsx-common/{{FILE}}.jsxinc;
 ```
 
@@ -22,23 +22,23 @@ After including the logger class in your script, you will need to create a new i
 See below for an example usage:
 
 
-```typescript jsx
+```jsx
 #include "/path/to/jsx-common/Logger.jsxinc;
 ```
 
-```typescript jsx
+```jsx
 var logger = new Logger( $.fileName, "/var/log/" );
 ```
 
 Write something to the log...
 
-```typescript jsx
+```jsx
 Logger.info( 'This is only a test' );
 ```
 
 Open /var/logs/myscript-2018-01-26.log
 
-```typescript jsx
+```jsx
 This is only a test
 ```
 
@@ -49,31 +49,31 @@ The Progress class allows you to easily incorporate a progress bar into your scr
 
 Example:
 
-```typescript jsx
+```jsx
 #include "/path/to/jsx-common/Progress.jsxinc;
 ```
 
-```typescript jsx
+```jsx
 var MyProgress = Progress.init( 0, 100 );
 ```
 
-```typescript jsx
+```jsx
 Progress.show();
 ```
 
-```typescript jsx
+```jsx
 Do some stuff ...
 ```
 
-```typescript jsx
+```jsx
 Progress.update( "Processed X of Y items" );
 ```
 
-```typescript jsx
+```jsx
 Finish doing some stuff...
 ```
 
-```typescript jsx
+```jsx
 Progress.close();
 ```
 
@@ -85,26 +85,26 @@ NOTE: I am not the original author of this include. I have tried to find who wro
 
 Example Usage:
 
-```typescript jsx
+```jsx
 #include "/path/to/jsx-common/JSON.jsxinc;
 ```
 
-```typescript jsx
+```jsx
 var Animal = {
     type : "dog",
     legs : 4,
     name : "Sammy"
 };
 ```
-```typescript jsx
+```jsx
 var sAnimal = JSON.stringify( Animal );
 ```
 
-```typescript jsx
+```jsx
 alert( sAnimal );
 ```
 
-```typescript jsx
+```jsx
 // Displays a string representation of Animal
 ```
 
@@ -114,7 +114,7 @@ The Utils class is just that - a utility class - that includes a lot of convenie
 
 Example Usage:
 
-```typescript jsx
+```jsx
 #include "/path/to/jsx-common/Utils.jsxinc;
 ```
 
