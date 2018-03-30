@@ -48,7 +48,7 @@ var logger = new Logger($.fileName, "/var/log/");
  * Our base object.
  * @type {{}}
  */
-var Utils = {};
+var Utils = new Object();
 
 /**
  * Turn off displaying alerts.
@@ -76,10 +76,45 @@ Utils.displayAlertsOn = function() {
  */
 Utils.get = function( subject, key, dfault ) {
     var value = dfault;
-    if (typeof(subject[key]) != 'undefined') {
+    if (subject.hasOwnProperty(key)) {
         value = subject[key];
     }
     return value;
+};
+
+/**
+ * Extends {Object} target with properties from {Object} source.
+ * No new properties are added to the object meaning only properties that
+ * exist in both source and target will be updated.
+ * @param target
+ * @param source
+ * @returns {*}
+ */
+Utils.update = function(target, source) {
+  for (key in source) {
+      if (target.hasOwnProperty(key)) {
+          target[key] = source[key];
+      }
+  }
+  return target;
+};
+
+/**
+ * Extends {Object} target with properties from {Object} source.
+ * Any values that are already set will not be updated. New properities
+ * will be added to the object.
+ * @param target
+ * @param source
+ * @returns {*}
+ */
+Utils.extend = function(target, source) {
+    for (key in source) {
+        if (target.get(key, false)) {
+            continue;
+        }
+        target[key] = source[key];
+    }
+    return target;
 };
 
 /**
@@ -342,10 +377,16 @@ Utils.expand_path = function(path, root_path) {
  */
 Utils.get_config = function(config_file) {
     var configFile = new File(config_file);
-    if (configFile.exists) {
-        return JSON.parse(Utils.read_file(configFile));
+    var config = {};
+    try {
+        if (configFile.exists) {
+            config = JSON.parse(Utils.read_file(configFile));
+        }
     }
-    return {};
+    catch(e) {
+        logger.error($.localize(e.message));
+    }
+    return config;
 };
 
 /**
